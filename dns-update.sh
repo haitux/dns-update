@@ -17,6 +17,7 @@ API_KEY=""
 API_SECRET=""
 DOMAIN="haitu.io"
 RECORD_NAME="nas"
+PROXY="http://172.0.0.1:1080"
 
 function command_exists() {
 	command -v "$@" >/dev/null 2>&1
@@ -27,17 +28,13 @@ command_exists curl || {
 	exit 1
 }
 
-command_exists dig || {
-	error "dig is not installed."
-	exit 1
-}
-
 # Get the public IP address of your LAN from `4.ipw.cn`
 PUBLIC_IP=`curl -s https://4.ipw.cn`
 if [ -z $PUBLIC_IP ]; then
 	echo "Failed to obtain the public IP."
 	exit 1
 fi
+echo "External IP: $PUBLIC_IP"
 
 # Get the current DNS records for the domain
 RESOLVED_IP=`ping "$RECORD_NAME.$DOMAIN" -c 1 | sed 's/.*(//;s/).*//;2,$d'`
@@ -45,11 +42,13 @@ if [ -z $RESOLVED_IP ]; then
 	echo "Failed to get resolved IP."
 	exit 1
 fi
+echo "Resolved IP: $RESOLVED_IP ($RECORD_NAME.$DOMAIN)"
 
 # Sends a request to the GoDaddy API to update the DNS record for the domain.
 function godaddy_update() {
 	local endpoint="https://api.godaddy.com/v1/domains/$DOMAIN/records/A/$RECORD_NAME"
 	local data=`curl -s \
+	                 --proxy $PROXY \
 	                 -X PUT \
 	                 -H "Authorization: sso-key $API_KEY:$API_SECRET" \
 	                 -H "Content-Type: application/json" \

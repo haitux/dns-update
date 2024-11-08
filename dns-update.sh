@@ -34,7 +34,6 @@ if [ -z $PUBLIC_IP ]; then
 	echo "Failed to obtain the public IP."
 	exit 1
 fi
-echo "External IP: $PUBLIC_IP"
 
 # Get the current DNS records for the domain
 RESOLVED_IP=`ping "$RECORD_NAME.$DOMAIN" -c 1 | sed 's/.*(//;s/).*//;2,$d'`
@@ -42,7 +41,6 @@ if [ -z $RESOLVED_IP ]; then
 	echo "Failed to get resolved IP."
 	exit 1
 fi
-echo "Resolved IP: $RESOLVED_IP ($RECORD_NAME.$DOMAIN)"
 
 # Sends a request to the GoDaddy API to update the DNS record for the domain.
 function godaddy_update() {
@@ -58,12 +56,22 @@ function godaddy_update() {
 	echo $data; 
 }
 
+function cloudflare_update() {
+	local endpoint="https://api.cloudflare.com/client/v4/zones/YOUR_ZONE_ID/dns_records/YOUR_RECORD_ID"
+	local data=`curl -s \
+	                 -X PUT \
+	                 -H "Authorization: Bearer $API_KEY" \
+	                 -H "Content-Type: application/json" \
+	                 -d "{\"content\":\"$PUBLIC_IP\",\"ttl\":600}" \
+	                 "$endpoint"`
+
+	echo $data; 
+}
+
 if [ "$RESOLVED_IP" == "$PUBLIC_IP" ]; then
 	echo "DNS record for $RECORD_NAME.$DOMAIN is already up-to-date."
 	exit 0
 fi
 
 echo "Updating DNS record for $RECORD_NAME.$DOMAIN to $PUBLIC_IP ..."
-godaddy_update
-
-
+cloudflare_update

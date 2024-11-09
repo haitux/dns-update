@@ -28,10 +28,17 @@ const getPublicIP = async () => {
 }
 
 /**
- * 异步获取DNS记录
+ * Fetch DNS record by domain name from Cloudflare API.
  * 
- * @param {string} domain - 需要查询的域名
- * @returns {Promise<Record>} - 返回一个Promise，解析为DNS记录的对象
+ * @param {string} domain - domain name to query.
+ * @returns {Object} - Returns the DNS record object.
+ *  @property {string} id - DNS record id, will be used to update the record.
+ *  @property {string} zone_id - Zone id.
+ *  @property {string} name - DNS record name.
+ *  @property {string} type - DNS record type, example: A, CNAME, TXT, etc.
+ *  @property {string} content - DNS record content, example: "117.127.138.155"
+ *  @property {number} ttl - DNS record TTL, in seconds.
+ *  @property {boolean} proxied - Whether the DNS record is proxied by Cloudflare.
  * @throws {Error} - 如果请求失败或API响应不成功，则抛出错误
  */
 const getRecord = async (domain) => {
